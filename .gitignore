@@ -1,5 +1,6 @@
 ### project ###
 uploads/*
+start-project.*
 
 ### dotenv ###
 .env
