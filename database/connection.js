@@ -1,9 +1,13 @@
 // Importaciones
 import { connect } from "mongoose";
+import 'dotenv/config'
 
+const db_url = process.env.DB_URL + '?authSource=shrimp';
+
+console.log('url conección:', db_url);
 const connection = async()=>{
   try {
-    await connect("mongodb://localhost:27017/bd_recettes");
+    await connect(db_url);
     console.log("Conectado correctamente a la BD: bd_recettes");
   } catch (error) {
     console.log(error);
