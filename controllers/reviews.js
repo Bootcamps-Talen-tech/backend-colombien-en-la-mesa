@@ -144,7 +144,6 @@ export const ShowRecipeReviews = async (req, res) => {
       });
     }
 
-
     // Configurar las opciones de la consulta
     const options = {
       page: page,
@@ -157,18 +156,13 @@ export const ShowRecipeReviews = async (req, res) => {
 
     const recipe_review = await Reviews.paginate({ recipe: recipeData.id}, options)
 
-    console.log('Reviews per user:', user_review);
+    //console.log('Reviews per user:', user_review);
     return res.status(200).send({
       status: "success",
       message: "Reviews encontrados",
       recipe_review
     });
 
-    console.log('Test ok');
-    return res.status(200).send({
-      status: "success",
-      message: "Test ok ShowRecipeReviews"
-    });
   }catch(error){
     console.log('Error en registro de usuario:', error);
     return res.status(500).send({
@@ -176,16 +170,56 @@ export const ShowRecipeReviews = async (req, res) => {
       message: "Error e consulta de receta"
     });
   }
-
 }
 
 //--- Método para eliminar comentario ---
 export const deleteReview = async (req, res) => {
   try{
-    console.log('Test ok');
-    return res.status(200).send({
+    // Verificar si el usuario está autenticado y tiene un userId
+    if (!req.user || !req.user.userId) {
+      return res.status(401).send({
+        status: "error",
+        message: "Usuario no autenticado o no existe"
+      });
+    }
+    console.log('userId:', req.user.userId);
+
+    // Verificar si receta existe
+    const reviewId = req.params.id;
+    const reviewInfo = await Reviews.findById(reviewId)
+    if(!reviewInfo) {
+      return res.status(400).send({
+        status: "error",
+        message: "el comentario a eliminar no existe"
+      });
+    }
+    
+    // Se verifica si quien quiere eliminar el comentatio es el autor del comentario o la receta
+    // Son logs dos unicos que lo pueden eliminar
+    const recipeData = await searchRecipeById( reviewInfo.recipe);
+    let canEliminated = false;
+    if(req.user.userId == reviewInfo.user || req.user.userId == recipeData.author){
+       canEliminated = true;
+    }
+    if(!canEliminated){
+      return res.status(400).send({
+        status: "error",
+        message: "No puedes eliminar el comentario, no eres el autor de comentario o la receta"
+      });
+    }
+
+    const delete_proces = await Reviews.findByIdAndDelete(reviewId)
+    if(!delete_proces){
+      return res.status(400).send({
+        status: "error",
+        message: "No se puedes eliminar el comentarioi, vuelva a intentarlo"
+      });
+    }
+
+    return res.status(200).json({
       status: "success",
-      message: "Test ok delete"
+      message: "comentario eliminado",
+      delete_proces
     });
   }catch(error){
     console.log('Error en registro de usuario:', error);
