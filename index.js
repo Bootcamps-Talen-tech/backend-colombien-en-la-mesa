@@ -4,6 +4,7 @@ import express, { json, urlencoded } from 'express';
 import cors from 'cors';
 import routerUser from './routes/user.js';
 import routerRecipes from './routes/recipes.js'
+import routerReviews from './routes/reviews.js'
 
 //Conexion a la base de datos
 connection()
@@ -22,6 +23,7 @@ app.use(urlencoded({extended:true}));
 // Configurar rutas
 app.use('/api/user', routerUser)
 app.use('/api/recipes', routerRecipes)
+app.use('/api/reviews', routerReviews)
 
 // Configurar el servidor para escuchar las peticiones HTTP
 app.listen(port,()=>{

@@ -1,5 +1,6 @@
 // Importamos las funciones 'Schema' y 'model' de la biblioteca 'mongoose'
 import { Schema, model } from "mongoose";
+import mongoosePaginate from 'mongoose-paginate-v2';
 
 const reviewsSchema = Schema({
   user:{
@@ -15,7 +16,9 @@ const reviewsSchema = Schema({
     required:true
   },
   rating:{
-    type:Int,
+    type: Number, 
+    min: 0, 
+    max: 5,
     required:true
   },
   created_at:{
@@ -24,4 +27,5 @@ const reviewsSchema = Schema({
   }
 })
 
+reviewsSchema.plugin(mongoosePaginate);
 export default model("Review",reviewsSchema,"reviews");
