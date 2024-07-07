@@ -1,6 +1,8 @@
 // Importaciones
 import Recipes from "../models/recipes.js";
 import Reviews from "../models/reviews.js";
+import { searchUserById } from "../services/user.js";
+import { searchRecipeById } from "../services/recipe.js";
 
 
 //--- Método para Registrar de usuarios ---
@@ -88,40 +90,41 @@ export const addReview = async (req, res) => {
 //--- Método para ver comentarios deun usuario ---
 export const ShowUserReviews = async (req, res) => {
   try{
-    const userId = req.params.id;
+    const userData = await searchUserById( req.params.id);
     let page = req.params.page ? parseInt(req.params.page, 10) : 1;
     let itemsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 5;
 
-    console.log('userIda', userId);
-    console.log('page', page);
-    console.log('itemsPerPage', itemsPerPage);
+    if (!userData) {
+      return res.status(401).send({
+        status: "error",
+        message: "Usuario no encontrado"
+      });
+    }
+
 
     // Configurar las opciones de la consulta
     const options = {
       page: page,
       limit: itemsPerPage,
       populate: {
-        path: 'user',
-        select: '-recipe -comment -rating'
+        path: 'recipe',
       },
-      lean: true
+      select: 'comment rating created_at'
     }
-    console.log('options:', options);
 
-    const user_review = await Reviews.paginate({ user: userId}, options)
-    console.log('Reviews per user:', user_review);
-    
+    const user_review = await Reviews.paginate({ user: userData.id}, options)
 
-    //console.log('Test ok');
+    //console.log('Reviews per user:', user_review);
     return res.status(200).send({
       status: "success",
-      message: "Test ok ShowUserReviews"
+      message: "Reviews encontrados",
+      user_review
     });
   }catch(error){
     console.log('Error en registro de usuario:', error);
     return res.status(500).send({
       status: "Error",
-      message: "Error en registro de usuario"
+      message: "Error en la busqueda de comentarios por usuario"
     });
   }
 
@@ -130,6 +133,37 @@ export const ShowUserReviews = async (req, res) => {
 //--- Método para ver comentarios de una receta  ---
 export const ShowRecipeReviews = async (req, res) => {
   try{
+    const recipeData = await searchRecipeById( req.params.id);
+    let page = req.params.page ? parseInt(req.params.page, 10) : 1;
+    let itemsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+
+    if (!recipeData) {
+      return res.status(401).send({
+        status: "error",
+        message: "Receta no encontrado"
+      });
+    }
+
+
+    // Configurar las opciones de la consulta
+    const options = {
+      page: page,
+      limit: itemsPerPage,
+      populate: {
+        path: 'user',
+      },
+      select: 'comment rating created_at'
+    }
+
+    const recipe_review = await Reviews.paginate({ recipe: recipeData.id}, options)
+
+    console.log('Reviews per user:', user_review);
+    return res.status(200).send({
+      status: "success",
+      message: "Reviews encontrados",
+      recipe_review
+    });
+
     console.log('Test ok');
     return res.status(200).send({
       status: "success",
@@ -139,7 +173,7 @@ export const ShowRecipeReviews = async (req, res) => {
     console.log('Error en registro de usuario:', error);
     return res.status(500).send({
       status: "Error",
-      message: "Error en registro de usuario"
+      message: "Error e consulta de receta"
     });
   }
 
@@ -157,7 +191,7 @@ export const deleteReview = async (req, res) => {
     console.log('Error en registro de usuario:', error);
     return res.status(500).send({
       status: "Error",
-      message: "Error en registro de usuario"
+      message: "Error en eliminación de comentario"
     });
   }
 }
