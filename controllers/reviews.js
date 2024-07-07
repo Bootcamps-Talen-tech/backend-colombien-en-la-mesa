@@ -88,7 +88,31 @@ export const addReview = async (req, res) => {
 //--- Método para ver comentarios deun usuario ---
 export const ShowUserReviews = async (req, res) => {
   try{
-    console.log('Test ok');
+    const userId = req.params.id;
+    let page = req.params.page ? parseInt(req.params.page, 10) : 1;
+    let itemsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+
+    console.log('userIda', userId);
+    console.log('page', page);
+    console.log('itemsPerPage', itemsPerPage);
+
+    // Configurar las opciones de la consulta
+    const options = {
+      page: page,
+      limit: itemsPerPage,
+      populate: {
+        path: 'user',
+        select: '-recipe -comment -rating'
+      },
+      lean: true
+    }
+    console.log('options:', options);
+
+    const user_review = await Reviews.paginate({ user: userId}, options)
+    console.log('Reviews per user:', user_review);
+    
+
+    //console.log('Test ok');
     return res.status(200).send({
       status: "success",
       message: "Test ok ShowUserReviews"

@@ -7,8 +7,8 @@ const router = Router();
 
 // Definir las rutas
 router.post('/add/:id', ensureAuth, addReview);
-router.get('/show-by-recipe/:page?', ShowRecipeReviews);
-router.get('/show-by-user/:page?', ShowUserReviews);
+router.get('/show-by-user/:id?/:page?', ShowUserReviews);
+router.get('/show-by-recipe/:id?/:page?', ShowRecipeReviews);
 router.delete('/delete/:id', ensureAuth, deleteReview);
 
 export default router;
