@@ -1,3 +1,4 @@
+
 import Recipes from "../models/recipes.js";
 import fs from 'fs';
 import path from "path";
@@ -179,7 +180,7 @@ export const recipeUser = async (req, res) => {
   }
 }
 
-// Método para subir archivos (imagen) a las publicaciones que hacemos
+//-- Método para subir archivos (imagen) a las publicaciones que hacemos
 export const uploadMedia = async (req, res) => {
   try {
     // Obtener el id de la receta
@@ -267,6 +268,89 @@ export const uploadMedia = async (req, res) => {
       status: "error",
       message: "Error al subir el archivo a la receta",
       error: error.message
+    });
+  }
+};
+
+//--- Método para mostrar el archivo subido a la publicación
+export const showMedia = async ()=>{
+  try {
+    // Obtener el parámetro del archivo desde la url
+    const file = req.params.file;
+
+    // Crear el path real de la imagen
+    const filePath = "./uploads/recipes/" + file;
+    fs.stat(filePath, (error, exists)=>{
+      if(!exists){
+        return res.status(404).send({
+          status: "error",
+          message: "No existe la imagen"
+        });
+      }
+      // Si lo encuentra nos devolvueve un archivo
+      return res.sendFile(path.resolve(filePath));
+    })
+  } catch (error) {
+    return res.status(500).send({
+      status: "error",
+      message: "Error al mostrar archivo en la publicación"
+    });
+  }
+}
+
+// Método para mostrar todas las recetas con paginación
+export const showAllRecipes = async (req, res) => {
+  try {
+    // Verificar si el usuario está autenticado
+    if (!req.user || !req.user.userId) {
+      return res.status(401).send({
+        status: "error",
+        message: "Usuario no autenticado"
+      });
+    }
+
+    // Obtener el número de página y el límite de elementos por página desde los parámetros de la solicitud
+    let page = req.query.page ? parseInt(req.query.page, 10) : 1;
+    let limit = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+
+    // Configurar las opciones de la paginación
+    const options = {
+      page: page,
+      limit: limit,
+      populate: {
+        path: 'author',
+        select: 'name'
+      },
+      sort: { createdAt: -1 } // Ordenar por fecha de creación descendente
+    };
+
+    // Obtener todas las recetas de la base de datos con paginación
+    const recipes = await Recipes.paginate({}, options);
+
+    // Verificar si se encontraron recetas
+    if (!recipes.docs || recipes.docs.length === 0) {
+      return res.status(404).send({
+        status: "error",
+        message: "No hay recetas disponibles"
+      });
+    }
+
+    // Devolver respuesta exitosa con todas las recetas y la información de paginación
+    return res.status(200).send({
+      status: "success",
+      message: "Recetas encontradas",
+      recipes: recipes.docs,
+      total: recipes.totalDocs,
+      pages: recipes.totalPages,
+      page: recipes.page,
+      limit: recipes.limit
+    });
+  } catch (error) {
+    console.error(error); // Imprimir el error en la consola para depuración
+    return res.status(500).send({
+      status: "error",
+      message: "Error al obtener las recetas",
+      error: error.message // Incluir el mensaje de error en la respuesta
     });
   }
 };
