@@ -51,7 +51,7 @@ export const addReview = async (req, res) => {
     if( existedComment.length > 0){
       return res.status(400).send({
         status: "error",
-        message: "Ya coamentaste esta receta"
+        message: "Ya comentaste esta receta"
       });
     }
 
@@ -87,7 +87,7 @@ export const addReview = async (req, res) => {
   }
 }
 
-//--- Método para ver comentarios deun usuario ---
+//--- Método para ver comentarios de un usuario ---
 export const ShowUserReviews = async (req, res) => {
   try{
     const userData = await searchUserById( req.params.id);
@@ -171,6 +171,40 @@ export const ShowRecipeReviews = async (req, res) => {
     });
   }
 }
+
+
+//--- Método para obtener el promedio de calificaciones de una receta ---
+export const getRecipeAverageRating = async (req, res) => {
+  try {
+    const recipeId = req.params.id;
+
+    // Verificar si la receta existe
+    const recipe = await Recipes.findById(recipeId);
+    if (!recipe) {
+      return res.status(404).send({
+        status: "error",
+        message: "Receta no encontrada",
+      });
+    }
+
+    // Calcular el promedio de las calificaciones
+    const reviews = await Reviews.find({ recipe: recipeId });
+    const totalRatings = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = reviews.length > 0 ? totalRatings / reviews.length : 0;
+
+    return res.status(200).send({
+      status: "success",
+      message: "Promedio de calificaciones obtenido",
+      averageRating: averageRating.toFixed(2), // Redondear a 2 decimales
+    });
+  } catch (error) {
+    console.log("Error al obtener el promedio de calificaciones:", error);
+    return res.status(500).send({
+      status: "error",
+      message: "Error al obtener el promedio de calificaciones",
+    });
+  }
+};
 
 //--- Método para eliminar comentario ---
 export const deleteReview = async (req, res) => {

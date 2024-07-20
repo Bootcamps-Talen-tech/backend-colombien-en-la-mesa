@@ -1,7 +1,7 @@
 
 import Recipes from "../models/recipes.js";
 import fs from 'fs';
-import path from "path";
+import path from 'path';
 
 // Método para hacer una publicación
 export const saveRecipes = async (req, res) => {
@@ -183,10 +183,8 @@ export const recipeUser = async (req, res) => {
 //-- Método para subir archivos (imagen) a las publicaciones que hacemos
 export const uploadMedia = async (req, res) => {
   try {
-    // Obtener el id de la receta
     const recipeId = req.params.id;
 
-    // Verificar si la receta existe en la base de datos antes de subir el archivo
     const recipeExists = await Recipes.findById(recipeId);
     if (!recipeExists) {
       return res.status(404).send({
@@ -195,7 +193,6 @@ export const uploadMedia = async (req, res) => {
       });
     }
 
-    // Comprobar que el archivo fue subido correctamente
     if (!req.file) {
       return res.status(404).send({
         status: "error",
@@ -203,36 +200,31 @@ export const uploadMedia = async (req, res) => {
       });
     }
 
-    // Obtener el nombre del archivo y la extensión
     const image = req.file.originalname;
-    const extension = path.extname(image).toLowerCase().substr(1);
+    const imageSplit = image.split(".");
+    const extension = imageSplit[imageSplit.length - 1];
 
-    // Validar la extensión del archivo
-    if (!["png", "jpg", "jpeg", "gif"].includes(extension)) {
-      fs.unlinkSync(req.file.path); // Eliminar archivo subido
+    if (!["png", "jpg", "jpeg", "gif"].includes(extension.toLowerCase())) {
+      fs.unlinkSync(req.file.path);
       return res.status(400).send({
         status: "error",
-        message: "Extensión de archivo inválida. Permitido: png, jpg, jpeg, gif"
+        message: "Extensión del archivo es inválida."
       });
     }
 
-    // Validar el tamaño del archivo (máximo 1MB)
     const fileSize = req.file.size;
     const maxFileSize = 1 * 1024 * 1024; // 1 MB
     if (fileSize > maxFileSize) {
-      fs.unlinkSync(req.file.path); // Eliminar archivo subido
+      fs.unlinkSync(req.file.path);
       return res.status(400).send({
         status: "error",
-        message: "El tamaño del archivo excede el límite máximo de 1 MB"
+        message: "El tamaño del archivo excede el límite (máx 1 MB)"
       });
     }
 
-    // Ruta del archivo actual en el sistema de archivos
-    const filePath = path.resolve("./uploads/recipes/", req.file.filename);
-
-    // Verificar si el archivo realmente existe en el sistema de archivos
+    const actualFilePath = path.resolve("./uploads/recipes/", req.file.filename);
     try {
-      fs.statSync(filePath);
+      fs.statSync(actualFilePath);
     } catch (error) {
       return res.status(404).send({
         status: "error",
@@ -240,10 +232,9 @@ export const uploadMedia = async (req, res) => {
       });
     }
 
-    // Actualizar la receta con el nombre del archivo
     const recipeUpdated = await Recipes.findByIdAndUpdate(
       recipeId,
-      { file: req.file.filename },
+      { image: req.file.filename },
       { new: true }
     );
 
@@ -254,7 +245,6 @@ export const uploadMedia = async (req, res) => {
       });
     }
 
-    // Devolver respuesta exitosa
     return res.status(200).send({
       status: "success",
       message: "Archivo subido con éxito",
@@ -272,24 +262,24 @@ export const uploadMedia = async (req, res) => {
   }
 };
 
-//--- Método para mostrar el archivo subido a la publicación
-export const showMedia = async ()=>{
+// Método para mostrar el archivo subido a la publicación
+export const showMedia = (req, res) => {
   try {
     // Obtener el parámetro del archivo desde la url
     const file = req.params.file;
 
     // Crear el path real de la imagen
     const filePath = "./uploads/recipes/" + file;
-    fs.stat(filePath, (error, exists)=>{
-      if(!exists){
+    fs.stat(filePath, (error, exists) => {
+      if (!exists) {
         return res.status(404).send({
           status: "error",
           message: "No existe la imagen"
         });
       }
-      // Si lo encuentra nos devolvueve un archivo
+      // Si lo encuentra nos devuelve un archivo
       return res.sendFile(path.resolve(filePath));
-    })
+    });
   } catch (error) {
     return res.status(500).send({
       status: "error",
@@ -310,8 +300,8 @@ export const showAllRecipes = async (req, res) => {
     }
 
     // Obtener el número de página y el límite de elementos por página desde los parámetros de la solicitud
-    let page = req.query.page ? parseInt(req.query.page, 10) : 1;
-    let limit = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+    let page = req.query.page ? parseInt(req.query.page, 12) : 1;
+    let limit = req.query.limit ? parseInt(req.query.limit, 12) : 12;
 
     // Configurar las opciones de la paginación
     const options = {
@@ -351,6 +341,40 @@ export const showAllRecipes = async (req, res) => {
       status: "error",
       message: "Error al obtener las recetas",
       error: error.message // Incluir el mensaje de error en la respuesta
+    });
+  }
+};
+
+/*vista previa */
+export const previewRecipes = async (req, res) => {
+  try {
+    // Obtener las últimas 6 recetas ordenadas por fecha de creación descendente
+    const recipes = await Recipes.find()
+      .select('title description ingredients image')
+      .sort({ createdAt: -1 })
+      .limit(6);
+
+      console.log(recipes)
+    // Verificar si se encontraron recetas
+    if (!recipes || recipes.length === 0) {
+      return res.status(404).send({
+        status: "error",
+        message: "No hay recetas disponibles para mostrar"
+      });
+    }
+
+    // Devolver respuesta exitosa con las recetas limitadas
+    return res.status(200).send({
+      status: "success",
+      message: "Vista previa de recetas encontrada",
+      previews: recipes
+    });
+  } catch (error) {
+    console.error("Error al obtener la vista previa de recetas:", error);
+    return res.status(500).send({
+      status: "error",
+      message: "Error al obtener la vista previa de recetas",
+      error: error.message
     });
   }
 };

@@ -32,6 +32,7 @@ const recipesSchema =  Schema({
     type:[String], // Array de strings para almacenar múltiples reseñas
     default: [],// Array vacío por defecto
   },
+ 
   created_at:{
     type: Date,
     default: Date.now
