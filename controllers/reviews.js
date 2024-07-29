@@ -92,7 +92,7 @@ export const ShowUserReviews = async (req, res) => {
   try{
     const userData = await searchUserById( req.params.id);
     let page = req.params.page ? parseInt(req.params.page, 10) : 1;
-    let itemsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+    let itemsPerPage = req.query.limit ? parseInt(req.query.limit, 20) : 20;
 
     if (!userData) {
       return res.status(401).send({
@@ -135,7 +135,7 @@ export const ShowRecipeReviews = async (req, res) => {
   try{
     const recipeData = await searchRecipeById( req.params.id);
     let page = req.params.page ? parseInt(req.params.page, 10) : 1;
-    let itemsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+    let itemsPerPage = req.query.limit ? parseInt(req.query.limit, 20) : 20;
 
     if (!recipeData) {
       return res.status(401).send({

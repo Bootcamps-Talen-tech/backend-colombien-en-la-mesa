@@ -132,10 +132,10 @@ export const recipeUser = async (req, res) => {
     const userId = req.params.id;
 
     // Asignar el número de página
-    let page = req.params.page ? parseInt(req.params.page, 10) : 1;
+    let page = req.params.page ? parseInt(req.params.page, 12) : 1;
 
     // Número de usuarios que queremos mostrar por página
-    let itemsRecPage = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+    let itemsRecPage = req.query.limit ? parseInt(req.query.limit, 12) : 12;
 
     // Configurar las opciones de la consulta
     const options = {
@@ -375,6 +375,71 @@ export const previewRecipes = async (req, res) => {
       status: "error",
       message: "Error al obtener la vista previa de recetas",
       error: error.message
+    });
+  }
+};
+
+// Método para editar una receta
+export const editRecipe = async (req, res) => {
+  try {
+    // Verificar si el usuario está autenticado y tiene un userId
+    if (!req.user || !req.user.userId) {
+      return res.status(401).send({
+        status: "error",
+        message: "Usuario no autenticado"
+      });
+    }
+
+    // Obtener el id de la receta desde los parámetros de la solicitud
+    const recipeId = req.params.id;
+
+    // Obtener datos del body
+    const params = req.body;
+
+    // Verificar que lleguen los parámetros necesarios desde el body
+    if (!params.title || !params.description || !params.ingredients || !params.instructions) {
+      return res.status(400).send({
+        status: "error",
+        message: "Debes enviar el título, descripción, ingredientes, instrucciones de la receta"
+      });
+    }
+
+    // Verificar si la receta existe y pertenece al usuario autenticado
+    const recipeExists = await Recipes.findOne({ _id: recipeId, author: req.user.userId });
+    if (!recipeExists) {
+      return res.status(404).send({
+        status: "error",
+        message: "No se ha encontrado la receta o no tienes permiso para editarla"
+      });
+    }
+
+    // Actualizar los detalles de la receta
+    const updatedRecipe = await Recipes.findByIdAndUpdate(
+      recipeId,
+      params,
+      { new: true } // Devolver el documento actualizado
+    );
+
+    // Verificar si la actualización fue exitosa
+    if (!updatedRecipe) {
+      return res.status(500).send({
+        status: "error",
+        message: "No se ha podido actualizar la receta"
+      });
+    }
+
+    // Devolver respuesta exitosa
+    return res.status(200).send({
+      status: "success",
+      message: "Receta actualizada con éxito",
+      updatedRecipe
+    });
+  } catch (error) {
+    console.error(error); // Imprimir el error en la consola para depuración
+    return res.status(500).send({
+      status: "error",
+      message: "Error al actualizar la receta",
+      error: error.message // Incluir el mensaje de error en la respuesta
     });
   }
 };

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { saveRecipes, showRecipe, deleteRecipe,recipeUser, uploadMedia, showAllRecipes, previewRecipes, showMedia } from '../controllers/recipes.js';
+import { saveRecipes, showRecipe, deleteRecipe,recipeUser, uploadMedia, showAllRecipes, previewRecipes, showMedia, editRecipe } from '../controllers/recipes.js';
 import { ensureAuth } from '../middlewares/auth.js';
 import multer from 'multer';
 import recipes from '../models/recipes.js';
@@ -28,6 +28,7 @@ router.post('/upload-media/:id',[ensureAuth, checkEntityExists(recipes,'id'),upl
 router.get('/media/:file', showMedia); 
 router.get('/show-all-recipes/:page?', ensureAuth, showAllRecipes);
 router.get('/preview-Recipes', previewRecipes)
+router.put('/edit-recipe/:id', ensureAuth, editRecipe)
 
 // Exportar el Router
 export default router;
